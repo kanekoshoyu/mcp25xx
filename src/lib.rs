@@ -172,7 +172,8 @@ where
     /// Read status flags
     pub fn read_status(&mut self) -> Result<ReadStatusResponse, <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::ReadStatus as u8])?;
+        let i = Instruction::ReadStatus as u8;
+        self.spi_write(&[i])?;
         let mut buf = [0];
         self.spi_transfer(&mut buf)?;
         self.set_cs_high();
@@ -182,7 +183,8 @@ where
     /// Reset internal registers to the default state. Sets Configuration mode.
     pub fn reset(&mut self) -> Result<(), <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::Reset as u8])?;
+        let i = Instruction::Reset as u8;
+        self.spi_write(&[i])?;
         self.set_cs_high();
         Ok(())
     }
@@ -192,7 +194,8 @@ where
     #[cfg_attr(doc, doc(cfg(any(feature = "mcp2515", feature = "mcp25625"))))]
     pub fn rx_status(&mut self) -> Result<RxStatusResponse, <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::RxStatus as u8])?;
+        let i = Instruction::RxStatus as u8;
+        self.spi_write(&[i])?;
         let mut buf = [0];
         self.spi_transfer(&mut buf)?;
         self.set_cs_high();
@@ -251,7 +254,9 @@ where
     /// Read a single register
     pub fn read_register<R: Register>(&mut self) -> Result<R, <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::Read as u8, R::ADDRESS])?;
+        let i = Instruction::Read as u8;
+        let p = R::ADDRESS as u8;
+        self.spi_write(&[i, p])?;
         let mut reg = [0];
         self.spi_transfer(&mut reg)?;
         self.set_cs_high();
@@ -264,7 +269,10 @@ where
         reg: R,
     ) -> Result<(), <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::Write as u8, R::ADDRESS, reg.into()])?;
+        let i = Instruction::Write as u8;
+        let p = R::ADDRESS as u8;
+        let v = reg.into();
+        self.spi_write(&[i, p, v])?;
         self.set_cs_high();
         Ok(())
     }
@@ -278,7 +286,10 @@ where
         mask: u8,
     ) -> Result<(), <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::BitModify as u8, R::ADDRESS, mask, reg.into()])?;
+        let i = Instruction::BitModify as u8;
+        let p = R::ADDRESS as u8;
+        let v = reg.into();
+        self.spi_write(&[i, p, v])?;
         self.set_cs_high();
         Ok(())
     }
@@ -290,7 +301,9 @@ where
         buf: &mut [u8],
     ) -> Result<(), <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::Read as u8, start_address])?;
+        let i = Instruction::Read as u8;
+        let p = start_address;
+        self.spi_write(&[i, p])?;
         self.spi_transfer(buf)?;
         self.set_cs_high();
         Ok(())
@@ -303,7 +316,9 @@ where
         data: &[u8],
     ) -> Result<(), <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::Write as u8, start_address])?;
+        let i = Instruction::Write as u8;
+        let p = start_address;
+        self.spi_write(&[i, p])?;
         self.spi_write(data)?;
         self.set_cs_high();
         Ok(())
@@ -312,7 +327,8 @@ where
     /// Request the selected transmit buffer to send a CAN frame
     pub fn request_to_send(&mut self, buf_idx: TxBuffer) -> Result<(), <Self as SpiWithCs>::Error> {
         self.set_cs_low();
-        self.spi_write(&[Instruction::Rts as u8 | (1 << buf_idx as u8)])?;
+        let i = Instruction::Rts as u8 | (1 << buf_idx as u8);
+        self.spi_write(&[i])?;
         self.set_cs_high();
         Ok(())
     }
@@ -327,7 +343,8 @@ where
         let data = &frame.as_bytes()[0..5 + frame.dlc()];
 
         self.set_cs_low();
-        self.spi_write(&[Instruction::LoadTxBuffer as u8 | (buf_idx as u8 * 2)])?;
+        let i = Instruction::LoadTxBuffer as u8 | (buf_idx as u8 * 2);
+        self.spi_write(&[i])?;
         self.spi_write(data)?;
         self.set_cs_high();
         Ok(())
@@ -384,7 +401,8 @@ where
         &mut self,
         buf_idx: RxBuffer,
     ) -> Result<(), <Self as SpiWithCs>::Error> {
-        self.spi_write(&[Instruction::ReadRxBuffer as u8 | (buf_idx as u8 * 2)])
+        let i = Instruction::ReadRxBuffer as u8 | (buf_idx as u8 * 2);
+        self.spi_write(&[i])
     }
 
     #[cfg(not(any(feature = "mcp2515", feature = "mcp25625")))]
@@ -392,7 +410,9 @@ where
         &mut self,
         buf_idx: RxBuffer,
     ) -> Result<(), <Self as SpiWithCs>::Error> {
-        self.spi_write(&[Instruction::Read as u8, 0x61 + 0x10 * buf_idx as u8])
+        let i = Instruction::Read as u8;
+        let p = 0x61 + 0x10 * buf_idx as u8;
+        self.spi_write(&[i, p])
     }
 }
 
